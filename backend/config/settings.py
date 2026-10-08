@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'django_filters',
+    'drf_spectacular',
     
 
     # Django REST Framework
@@ -149,3 +150,14 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:8100',
     'http://127.0.0.1:8100',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Concessionária - Equipe B',
+    'DESCRIPTION': 'Documentação dos endpoints de Logística, Fornecedores, Evidências e Ocorrências.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
