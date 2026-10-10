@@ -1,5 +1,5 @@
 from django.db import models
-from apps.veiculos.models import Veiculo
+from apps.veiculos.models import Veiculo, CicloVeiculo
 
 class Servico(models.Model):
     STATUS_CHOICES = [
@@ -11,6 +11,7 @@ class Servico(models.Model):
     ]
 
     veiculo = models.ForeignKey(Veiculo, on_delete=models.CASCADE, related_name='servicos', verbose_name="Veículo")
+    ciclo = models.ForeignKey(CicloVeiculo, on_delete=models.PROTECT, related_name='servicos', verbose_name="Ciclo Operacional", null=True, blank=True)
     descricao = models.CharField(max_length=255, verbose_name="Descrição do Serviço")
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='SOLICITADO', verbose_name="Status")
     precisa_autorizacao = models.BooleanField(default=True)

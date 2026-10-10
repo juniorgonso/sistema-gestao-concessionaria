@@ -10,8 +10,17 @@ class VistoriaQualidadeSerializer(serializers.ModelSerializer):
         model = VistoriaQualidade
         fields = '__all__'
 
+
 class ProcessoLavagemSerializer(serializers.ModelSerializer):
-    veiculo_placa = serializers.CharField(source='veiculo.placa', read_only=True)
+    veiculo_placa = serializers.CharField(
+        source='ciclo.veiculo.placa',
+        read_only=True
+    )
+
+    ciclo_numero = serializers.IntegerField(
+        source='ciclo.numero_ciclo',
+        read_only=True
+    )
 
     class Meta:
         model = ProcessoLavagem

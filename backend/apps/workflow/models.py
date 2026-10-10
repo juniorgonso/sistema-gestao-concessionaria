@@ -29,6 +29,7 @@ class VistoriaQualidade(models.Model):
     ]
 
     veiculo = models.ForeignKey(Veiculo, on_delete=models.CASCADE, related_name='vistorias')
+    ciclo = models.ForeignKey(CicloVeiculo, on_delete=models.PROTECT, related_name='vistorias', null=True, blank=True)
     etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES)
     resultado = models.CharField(max_length=20, choices=RESULTADO_CHOICES)
     observacoes = models.TextField(blank=True, null=True)
@@ -38,18 +39,69 @@ class VistoriaQualidade(models.Model):
         return f"Vistoria {self.etapa} - {self.veiculo.placa} [{self.resultado}]"
 
 
+
 class ProcessoLavagem(models.Model):
     STATUS_CHOICES = [
         ('FILA', 'Na Fila'),
         ('EM_ANDAMENTO', 'Em Andamento'),
         ('CONCLUIDO', 'Concluído'),
+        ('CANCELADO', 'Cancelado'),
     ]
 
-    veiculo = models.OneToOneField(Veiculo, on_delete=models.CASCADE, related_name='lavagem')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='FILA')
-    responsavel = models.CharField(max_length=100, blank=True, null=True)
-    iniciado_em = models.DateTimeField(blank=True, null=True)
-    concluido_em = models.DateTimeField(blank=True, null=True)
+    ciclo = models.ForeignKey(
+        'veiculos.CicloVeiculo',
+        on_delete=models.PROTECT,
+        related_name='lavagens',
+        verbose_name="Ciclo Operacional",
+        null=True,
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='FILA',
+        verbose_name="Status",
+    )
+
+    responsavel = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Responsável",
+    )
+
+    iniciado_em = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Início da Lavagem",
+    )
+
+    concluido_em = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Conclusão da Lavagem",
+    )
+
+    observacoes = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Observações",
+    )
+
+    criado_em = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Criado em",
+    )
+
+    class Meta:
+        verbose_name = "Processo de Lavagem"
+        verbose_name_plural = "Processos de Lavagem"
+        ordering = ['criado_em']
 
     def __str__(self):
-        return f"Lavagem {self.veiculo.placa} - {self.status}"
+        return (
+            f"Lavagem do veículo {self.ciclo.veiculo.placa} "
+            f"| Ciclo #{self.ciclo.numero_ciclo} "
+            f"| {self.status}"
+        )
