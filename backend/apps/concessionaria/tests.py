@@ -2,13 +2,17 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from apps.veiculos.models import Veiculo
 from apps.concessionaria.models import Ocorrencia, Unidade, Concessionaria
+from django.contrib.auth import get_user_model
 
 class EquipeBTests(APITestCase):
     def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username='auditor_teste', password='123')
         self.concessionaria = Concessionaria.objects.create(nome="Grupo Via 1", cnpj="12345678000199")
         self.unidade = Unidade.objects.create(concessionaria=self.concessionaria, nome="Piedade")
         self.veiculo = Veiculo.objects.create(placa="XYZ-9876", marca_modelo="Compass", loja="PIEDADE", status="AVALIADOR")
         self.ocorrencias_url = '/api/v1/concessionaria/ocorrencias/'
+        self.client.force_authenticate(user=self.user)
 
     def test_criar_ocorrencia_v2(self):
         data = {
