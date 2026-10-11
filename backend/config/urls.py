@@ -6,6 +6,20 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+# 🚀 1. As nossas classes customizadas têm de ficar AQUI EM CIMA, antes das rotas
+class CustomTokenSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Injeta os grupos do utilizador dentro do JWT
+        token['grupos'] = list(user.groups.values_list('name', flat=True))
+        return token
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenSerializer
+
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -20,8 +34,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # Rotas de Autenticação JWT (Login)
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # 🚀 2. AQUI ESTÁ A MUDANÇA: Trocámos para a nossa View Customizada!
+    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Rotas da API V1
@@ -34,5 +48,6 @@ urlpatterns = [
     path('api/schema/', schema_view.without_ui(cache_timeout=0), name='schema'),
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
 ]
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

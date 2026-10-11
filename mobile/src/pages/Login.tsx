@@ -25,10 +25,12 @@ const Login: React.FC = () => {
       const token = await login(username, password);
       console.log("Token JWT recebido:", token);
       
-      present({ message: 'Acesso liberado! Autenticado na V2.1', duration: 2000, color: 'success' });
+      present({ message: 'Acesso liberado! Autenticado na V2.2', duration: 2000, color: 'success' });
       
-      // Navegação nativa e blindada do React Router v6
-      navigate('/home', { replace: true });
+      // 🚀 AQUI ESTAVA O SEGREDO: 
+      // Em vez de forçar o /home, mandamos para a raiz (/)
+      // Assim o nosso Roteador Inteligente do App.tsx decide a tela certa!
+      navigate('/', { replace: true });
       
     } catch (error) {
       present({ message: 'Credenciais inválidas.', duration: 3000, color: 'danger' });
@@ -42,7 +44,7 @@ const Login: React.FC = () => {
       <IonContent className="ion-padding">
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
           <IonText color="primary" className="ion-text-center">
-            <h2>Acesso ao Sistema V2.1</h2>
+            <h2>Acesso ao Sistema V2.2</h2>
           </IonText>
           
           <IonItem>
