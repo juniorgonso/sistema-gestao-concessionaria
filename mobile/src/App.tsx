@@ -21,14 +21,36 @@ import './theme/variables.css';
 
 setupIonicReact();
 
+// 🚀 O NOSSO LEÃO DE CHÁCARA (Route Guard)
+// Esta função verifica o crachá antes de deixar renderizar o ecrã.
+const RotaPrivada = ({ children }: { children: JSX.Element }) => {
+  const token = localStorage.getItem('@SistemaGestao:token');
+  // Se tiver token, mostra a página. Se não tiver, chuta de volta para o login.
+  return token ? children : <Navigate to="/login" replace />;
+};
+
 const App: React.FC = () => (
   <IonApp>
     <IonReactRouter>
       <IonRouterOutlet>
-        <Route path="/home" element={<Home />} />
+        {/* Rotas Públicas */}
         <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/nova-ocorrencia" element={<NovaOcorrencia />} />
+        
+        {/* Rotas Privadas (Envolvidas pelo Guarda-Costas) */}
+        <Route path="/home" element={
+          <RotaPrivada>
+            <Home />
+          </RotaPrivada>
+        } />
+        <Route path="/nova-ocorrencia" element={
+          <RotaPrivada>
+            <NovaOcorrencia />
+          </RotaPrivada>
+        } />
+        
+        {/* Se alguém digitar apenas "/" na barra, tenta atirar para a Home. 
+            A Home, por sua vez, vai acionar o RotaPrivada. */}
+        <Route path="/" element={<Navigate to="/home" replace />} />
       </IonRouterOutlet>
     </IonReactRouter>
   </IonApp>

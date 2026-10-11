@@ -2,6 +2,9 @@ from rest_framework import viewsets, permissions
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import VistoriaQualidade, ProcessoLavagem, HistoricoEvento
 from .serializers import VistoriaQualidadeSerializer, ProcessoLavagemSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+from .models import EvidenciaFoto
+from .serializers import EvidenciaFotoSerializer
 
 class VistoriaQualidadeViewSet(viewsets.ModelViewSet):
     queryset = VistoriaQualidade.objects.all()
@@ -64,5 +67,28 @@ class ProcessoLavagemViewSet(viewsets.ModelViewSet):
             ciclo=lavagem.ciclo,
             tipo_evento="LAVAGEM_STATUS_ALTERADO",
             descricao=f"Status da lavagem alterado para: {lavagem.get_status_display()}.",
+            autor=str(self.request.user)
+        )
+
+class EvidenciaFotoViewSet(viewsets.ModelViewSet):
+    queryset = EvidenciaFoto.objects.all()
+    serializer_class = EvidenciaFotoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    # O SEGREDO ESTÁ AQUI: Ensina o Django a receber ficheiros pesados em vez de texto!
+    parser_classes = (MultiPartParser, FormParser)
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['ciclo']
+
+    def perform_create(self, serializer):
+        # Mais uma vez o nosso Olho Que Tudo Vê: Assina a foto com o nome do utilizador logado
+        foto = serializer.save(enviado_por=str(self.request.user))
+        
+        # E regista na auditoria que alguém enviou uma foto!
+        HistoricoEvento.objects.create(
+            veiculo=foto.ciclo.veiculo,
+            ciclo=foto.ciclo,
+            tipo_evento="EVIDENCIA_FOTOGRAFICA_ANEXADA",
+            descricao=f"Foto anexada: {foto.descricao}.",
             autor=str(self.request.user)
         )

@@ -39,7 +39,6 @@ class VistoriaQualidade(models.Model):
         return f"Vistoria {self.etapa} - {self.veiculo.placa} [{self.resultado}]"
 
 
-
 class ProcessoLavagem(models.Model):
     STATUS_CHOICES = [
         ('FILA', 'Na Fila'),
@@ -105,3 +104,24 @@ class ProcessoLavagem(models.Model):
             f"| Ciclo #{self.ciclo.numero_ciclo} "
             f"| {self.status}"
         )
+
+    
+class EvidenciaFoto(models.Model):
+    ciclo = models.ForeignKey(
+        'veiculos.CicloVeiculo', 
+        on_delete=models.CASCADE, 
+        related_name='fotos',
+        verbose_name="Ciclo Operacional"
+    )
+    # O upload_to cria pastas organizadas por ano e mês automaticamente!
+    foto = models.ImageField(upload_to='evidencias/%Y/%m/', verbose_name="Arquivo da Foto")
+    descricao = models.CharField(max_length=255, blank=True, null=True, verbose_name="Descrição/Local do Dano")
+    enviado_em = models.DateTimeField(auto_now_add=True)
+    enviado_por = models.CharField(max_length=150)
+
+    class Meta:
+        verbose_name = "Evidência Fotográfica"
+        verbose_name_plural = "Evidências Fotográficas"
+
+    def __str__(self):
+        return f"Foto do Ciclo #{self.ciclo.numero_ciclo} ({self.descricao or 'Sem descrição'})"

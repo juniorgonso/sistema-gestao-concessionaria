@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import VistoriaQualidade, ProcessoLavagem
+from .models import EvidenciaFoto
 
 class VistoriaQualidadeSerializer(serializers.ModelSerializer):
     veiculo_placa = serializers.CharField(source='veiculo.placa', read_only=True)
@@ -25,3 +26,10 @@ class ProcessoLavagemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcessoLavagem
         fields = '__all__'
+
+
+class EvidenciaFotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EvidenciaFoto
+        fields = '__all__'
+        read_only_fields = ['enviado_por', 'enviado_em']
