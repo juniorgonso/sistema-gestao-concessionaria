@@ -1,13 +1,21 @@
 from django.db import models
 from apps.veiculos.models import Veiculo, CicloVeiculo
+from django.conf import settings
 
 class HistoricoEvento(models.Model):
     veiculo = models.ForeignKey(Veiculo, on_delete=models.CASCADE, related_name='historico', verbose_name="Veículo")
     ciclo = models.ForeignKey(CicloVeiculo, on_delete=models.CASCADE, related_name='eventos', null=True, blank=True, verbose_name="Ciclo")
     tipo_evento = models.CharField(max_length=100, verbose_name="Tipo de Evento (Ex: MUDANCA_ETAPA, OCORRENCIA_CRIADA)")
     descricao = models.TextField(verbose_name="Detalhe da Movimentação")
-    autor = models.CharField(max_length=150, blank=True, null=True, verbose_name="Responsável / Sistema")
-    registrado_em = models.DateTimeField(auto_now_add=True)
+    
+    # 🔒 CORREÇÃO DO AUDITOR: Autor agora é um vínculo real com o Usuário
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        verbose_name="Usuário Responsável"
+    )
+    registrado_em = models.DateTimeField(auto_now_add=True, verbose_name="Registrado em")
 
     class Meta:
         verbose_name = "Histórico e Auditoria"
@@ -29,14 +37,17 @@ class VistoriaQualidade(models.Model):
     ]
 
     veiculo = models.ForeignKey(Veiculo, on_delete=models.CASCADE, related_name='vistorias')
-    ciclo = models.ForeignKey(CicloVeiculo, on_delete=models.PROTECT, related_name='vistorias', null=True, blank=True)
+    
+    # 🔒 CORREÇÃO DO AUDITOR: Null e Blank removidos. Ciclo é OBRIGATÓRIO!
+    ciclo = models.ForeignKey(CicloVeiculo, on_delete=models.PROTECT, related_name='vistorias')
+    
     etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES)
     resultado = models.CharField(max_length=20, choices=RESULTADO_CHOICES)
     observacoes = models.TextField(blank=True, null=True)
     realizado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Vistoria {self.etapa} - {self.veiculo.placa} [{self.resultado}]"
+        return f"Vistoria {self.get_etapa_display()} - {self.veiculo.placa} [{self.get_resultado_display()}]"
 
 
 class ProcessoLavagem(models.Model):
@@ -47,13 +58,12 @@ class ProcessoLavagem(models.Model):
         ('CANCELADO', 'Cancelado'),
     ]
 
+    # 🔒 CORREÇÃO DO AUDITOR: Null e Blank removidos. Ciclo é OBRIGATÓRIO!
     ciclo = models.ForeignKey(
         'veiculos.CicloVeiculo',
         on_delete=models.PROTECT,
         related_name='lavagens',
-        verbose_name="Ciclo Operacional",
-        null=True,
-        blank=True
+        verbose_name="Ciclo Operacional"
     )
 
     status = models.CharField(
@@ -102,7 +112,7 @@ class ProcessoLavagem(models.Model):
         return (
             f"Lavagem do veículo {self.ciclo.veiculo.placa} "
             f"| Ciclo #{self.ciclo.numero_ciclo} "
-            f"| {self.status}"
+            f"| {self.get_status_display()}"
         )
 
     
@@ -113,11 +123,17 @@ class EvidenciaFoto(models.Model):
         related_name='fotos',
         verbose_name="Ciclo Operacional"
     )
-    # O upload_to cria pastas organizadas por ano e mês automaticamente!
     foto = models.ImageField(upload_to='evidencias/%Y/%m/', verbose_name="Arquivo da Foto")
     descricao = models.CharField(max_length=255, blank=True, null=True, verbose_name="Descrição/Local do Dano")
     enviado_em = models.DateTimeField(auto_now_add=True)
-    enviado_por = models.CharField(max_length=150)
+    
+    # 🔒 CORREÇÃO DO AUDITOR: Enviado_por agora é um vínculo real com o Usuário
+    enviado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        verbose_name="Enviado por"
+    )
 
     class Meta:
         verbose_name = "Evidência Fotográfica"

@@ -45,7 +45,7 @@ class VeiculoViewSet(viewsets.ModelViewSet):
                 ciclo=ciclo_ativo,
                 tipo_evento="MUDANCA_ETAPA_VEICULO",
                 descricao=f"Veículo avançou no fluxo: de {veiculo.status} para {novo_status}.",
-                autor=str(request.user)
+                autor=request.user
             )
 
         # Continua com a gravação normal

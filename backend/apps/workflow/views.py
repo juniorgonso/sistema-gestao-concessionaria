@@ -5,11 +5,12 @@ from .serializers import VistoriaQualidadeSerializer, ProcessoLavagemSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import EvidenciaFoto
 from .serializers import EvidenciaFotoSerializer
+from .permissions import IsLavagem, IsQualidade # 🔒 Importando os crachás
 
 class VistoriaQualidadeViewSet(viewsets.ModelViewSet):
     queryset = VistoriaQualidade.objects.all()
     serializer_class = VistoriaQualidadeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsQualidade]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['etapa', 'resultado', 'veiculo', 'ciclo']
 
@@ -23,7 +24,7 @@ class VistoriaQualidadeViewSet(viewsets.ModelViewSet):
             ciclo=vistoria.ciclo,
             tipo_evento="VISTORIA_REGISTRADA",
             descricao=f"Vistoria {vistoria.get_etapa_display()} finalizada com resultado: {vistoria.get_resultado_display()}.",
-            autor=str(self.request.user) # Puxa o utilizador direto do Token JWT
+            autor=self.request.user # Puxa o utilizador direto do Token JWT
         )
 
     # O "Olho que Tudo Vê" para a Atualização
@@ -35,7 +36,7 @@ class VistoriaQualidadeViewSet(viewsets.ModelViewSet):
             ciclo=vistoria.ciclo,
             tipo_evento="VISTORIA_ATUALIZADA",
             descricao=f"Vistoria {vistoria.get_etapa_display()} reavaliada para: {vistoria.get_resultado_display()}.",
-            autor=str(self.request.user)
+            autor=self.request.user
         )
 
 class ProcessoLavagemViewSet(viewsets.ModelViewSet):
@@ -44,7 +45,7 @@ class ProcessoLavagemViewSet(viewsets.ModelViewSet):
         'ciclo__veiculo'
     ).all()
     serializer_class = ProcessoLavagemSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsLavagem]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['status', 'ciclo']
 
@@ -56,7 +57,7 @@ class ProcessoLavagemViewSet(viewsets.ModelViewSet):
             ciclo=lavagem.ciclo,
             tipo_evento="LAVAGEM_CRIADA",
             descricao="Veículo inserido na fila de lavagem.",
-            autor=str(self.request.user)
+            autor=self.request.user
         )
 
     def perform_update(self, serializer):
@@ -67,7 +68,7 @@ class ProcessoLavagemViewSet(viewsets.ModelViewSet):
             ciclo=lavagem.ciclo,
             tipo_evento="LAVAGEM_STATUS_ALTERADO",
             descricao=f"Status da lavagem alterado para: {lavagem.get_status_display()}.",
-            autor=str(self.request.user)
+            autor=self.request.user
         )
 
 class EvidenciaFotoViewSet(viewsets.ModelViewSet):
@@ -81,14 +82,14 @@ class EvidenciaFotoViewSet(viewsets.ModelViewSet):
     filterset_fields = ['ciclo']
 
     def perform_create(self, serializer):
-        # Mais uma vez o nosso Olho Que Tudo Vê: Assina a foto com o nome do utilizador logado
-        foto = serializer.save(enviado_por=str(self.request.user))
+        # 1. Salva a foto com o utilizador
+        foto = serializer.save(enviado_por=self.request.user)
         
-        # E regista na auditoria que alguém enviou uma foto!
+        # 2. Salva o histórico com o utilizador
         HistoricoEvento.objects.create(
             veiculo=foto.ciclo.veiculo,
             ciclo=foto.ciclo,
             tipo_evento="EVIDENCIA_FOTOGRAFICA_ANEXADA",
             descricao=f"Foto anexada: {foto.descricao}.",
-            autor=str(self.request.user)
+            autor=self.request.user
         )

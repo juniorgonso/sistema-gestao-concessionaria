@@ -162,8 +162,14 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
-# CONFIGURAÇÃO DO CORS
-CORS_ALLOW_ALL_ORIGINS = True
+# 🔒 CORREÇÃO DO AUDITOR: Portão fechado. Só o telemóvel/frontend e o localhost entram.
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8100",      # O seu Ionic rodando localmente no navegador
+    "http://127.0.0.1:8100",
+    "http://localhost:5173",      # Caso use Vite em algum painel web
+    # "https://viasul-app.vercel.app", # <-- Mais tarde você descomenta e coloca o link do seu frontend real aqui!
+]
 
 # Se quiser liberar todos os métodos HTTP (GET, POST, PUT, DELETE)
 CORS_ALLOW_METHODS = [

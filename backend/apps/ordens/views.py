@@ -3,11 +3,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Servico, Autorizacao
 from .serializers import ServicoSerializer, AutorizacaoSerializer
 from apps.workflow.models import HistoricoEvento  # O nosso "Olho que Tudo Vê"
+from apps.workflow.permissions import IsOficina
 
 class ServicoViewSet(viewsets.ModelViewSet):
     queryset = Servico.objects.all()
     serializer_class = ServicoSerializer
-    permission_classes = [permissions.IsAuthenticated] # Cofre Trancado
+    permission_classes = [IsOficina] # Cofre Trancado
     # Adicionámos o 'ciclo' aos filtros para o mobile conseguir procurar corretamente
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['status', 'veiculo', 'ciclo', 'precisa_autorizacao']
@@ -20,7 +21,7 @@ class ServicoViewSet(viewsets.ModelViewSet):
             ciclo=servico.ciclo,
             tipo_evento="SERVICO_SOLICITADO",
             descricao=f"Serviço solicitado: {servico.descricao}.",
-            autor=str(self.request.user)
+            autor=self.request.user
         )
 
     def perform_update(self, serializer):
@@ -31,7 +32,7 @@ class ServicoViewSet(viewsets.ModelViewSet):
             ciclo=servico.ciclo,
             tipo_evento="SERVICO_STATUS_ALTERADO",
             descricao=f"Status do serviço '{servico.descricao}' alterado para: {servico.get_status_display()}.",
-            autor=str(self.request.user)
+            autor=self.request.user
         )
 
 class AutorizacaoViewSet(viewsets.ModelViewSet):
@@ -50,7 +51,7 @@ class AutorizacaoViewSet(viewsets.ModelViewSet):
             ciclo=autorizacao.servico.ciclo,
             tipo_evento="AUTORIZACAO_CRIADA",
             descricao=f"Pedido de autorização gerado para o serviço: {autorizacao.servico.descricao}.",
-            autor=str(self.request.user)
+            autor=self.request.user
         )
 
     def perform_update(self, serializer):
@@ -61,5 +62,5 @@ class AutorizacaoViewSet(viewsets.ModelViewSet):
             ciclo=autorizacao.servico.ciclo,
             tipo_evento="AUTORIZACAO_RESPONDIDA",
             descricao=f"Orçamento/Serviço '{autorizacao.servico.descricao}' foi {autorizacao.get_status_display().upper()}.",
-            autor=str(self.request.user)
+            autor=self.request.user
         )

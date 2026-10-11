@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from apps.veiculos.models import Veiculo, CicloVeiculo
 
 class Concessionaria(models.Model):
     nome = models.CharField(max_length=150, verbose_name="Nome da Concessionária")
@@ -45,8 +44,8 @@ class Ocorrencia(models.Model):
         ('QUALIDADE_FINAL', 'Qualidade Final'),
     ]
 
-    veiculo = models.ForeignKey(Veiculo, on_delete=models.CASCADE, related_name='ocorrencias', verbose_name="Veículo")
-    ciclo = models.ForeignKey(CicloVeiculo, on_delete=models.CASCADE, related_name='ocorrencias', null=True, blank=True, verbose_name="Ciclo Operacional")
+    veiculo = models.ForeignKey('veiculos.Veiculo', on_delete=models.CASCADE, related_name='ocorrencias', verbose_name="Veículo")
+    ciclo = models.ForeignKey('veiculos.CicloVeiculo', on_delete=models.CASCADE, related_name='ocorrencias', null=True, blank=True, verbose_name="Ciclo Operacional")
     origem = models.CharField(max_length=30, choices=ORIGEM_CHOICES, default='AVALIADOR', verbose_name="Etapa de Origem")
     
     descricao = models.TextField(verbose_name="Descrição do Problema")
