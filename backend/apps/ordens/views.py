@@ -4,6 +4,8 @@ from .models import Servico, Autorizacao
 from .serializers import ServicoSerializer, AutorizacaoSerializer
 from apps.workflow.models import HistoricoEvento  # O nosso "Olho que Tudo Vê"
 from apps.workflow.permissions import IsOficina
+from rest_framework.permissions import IsAuthenticated
+from .permissions import IsAdministrativo
 
 class ServicoViewSet(viewsets.ModelViewSet):
     queryset = Servico.objects.all()
@@ -38,7 +40,7 @@ class ServicoViewSet(viewsets.ModelViewSet):
 class AutorizacaoViewSet(viewsets.ModelViewSet):
     queryset = Autorizacao.objects.all()
     serializer_class = AutorizacaoSerializer
-    permission_classes = [permissions.IsAuthenticated] # Cofre Trancado
+    permission_classes = [IsAuthenticated, IsAdministrativo] # Cofre Trancado
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['status', 'servico']
 

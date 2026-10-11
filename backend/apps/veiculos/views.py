@@ -57,3 +57,12 @@ class CicloVeiculoViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['veiculo', 'ativo', 'numero_ciclo']
+
+class VeiculoViewSet(viewsets.ModelViewSet):
+    queryset = Veiculo.objects.all()
+    serializer_class = VeiculoSerializer
+    # ... os seus filtros que já lá estão ...
+
+    # 🚀 TIRO 1: Ninguém falsifica o nascimento. Todo o veículo nasce no Avaliador!
+    def perform_create(self, serializer):
+        serializer.save(status='AVALIADOR')
