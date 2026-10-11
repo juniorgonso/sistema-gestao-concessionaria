@@ -11,8 +11,15 @@ export interface VeiculoLavagem {
 
 // 1. Lavagem (Bate com "Lavagem")
 export const listarParaLavagem = async (): Promise<VeiculoLavagem[]> => {
-    const response = await api.get('/veiculos/lista/?status=Lavagem');
-    return response.data;
+    // Buscamos todos os veículos e filtramos no cliente para evitar erros de query string no Django
+    const response = await api.get('/veiculos/lista/');
+    const todos = response.data;
+    
+    // Filtra os que pertencem à lavagem (ajuste conforme o campo que vem do backend: status ou etapa_atual)
+    return todos.filter((v: any) => 
+        v.status?.toLowerCase().includes('lavagem') || 
+        v.etapa_atual?.toLowerCase().includes('lavagem')
+    );
 };
 
 export const concluirLavagem = async (cicloId: number) => {
