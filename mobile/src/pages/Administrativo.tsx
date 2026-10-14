@@ -9,7 +9,7 @@ const Administrativo: React.FC = () => {
 
   useEffect(() => { carregarPendentes(); }, []);
 
-  const handleSair = () => { logout(); router.push('/login', 'forward', 'replace'); };
+  const handleSair = () => { logout(); window.location.href = '/login'; };
 
   const carregarPendentes = async () => {
     try {

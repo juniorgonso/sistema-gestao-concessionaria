@@ -29,7 +29,7 @@ import './theme/variables.css';
 setupIonicReact();
 
 // 🚀 O NOSSO LEÃO DE CHÁCARA
-const RotaPrivada = ({ children }: { children: JSX.Element }) => {
+const RotaPrivada = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('@SistemaGestao:token');
   return token ? children : <Navigate to="/login" replace />;
 };

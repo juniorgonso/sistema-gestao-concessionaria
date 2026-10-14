@@ -1,49 +1,76 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, 
   IonCard, IonCardHeader, IonCardTitle, IonCardContent, 
-  IonBadge, IonSpinner, IonButton, useIonRouter, IonText
+  IonBadge, IonButton, IonSpinner, IonText
 } from '@ionic/react';
-import { listarServicosExternos, concluirServicoExterno, VeiculoLavagem } from '../services/workflow';
 import { logout } from '../services/auth';
 
+// Interface genérica que permite solicitações de qualquer líder no futuro
+interface DemandaExterna {
+  id: number;
+  titulo: string;
+  descricao: string;
+  solicitante: string; // Ex: 'Administrativo', 'Gerente de Vendas', 'Chefe de Oficina'
+  data_solicitacao: string;
+  status: 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO';
+}
+
 const ServicoExterno: React.FC = () => {
-  const [veiculos, setVeiculos] = useState<VeiculoLavagem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const router = useIonRouter();
+  const [demandas, setDemandas] = useState<DemandaExterna[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { carregarVeiculos(); }, []);
+  useEffect(() => {
+    carregarDemandas();
+  }, []);
 
-  const handleSair = () => { logout(); router.push('/login', 'forward', 'replace'); };
-
-  const carregarVeiculos = async () => {
-    try {
-      setLoading(true);
-      const dados = await listarServicosExternos();
-      setVeiculos(dados);
-    } catch (error: any) {
-      if (error.response?.status === 401) handleSair();
-    } finally {
-      setLoading(false);
-    }
+  const handleSair = () => {
+    logout();
+    window.location.href = '/login'; // Mantendo a limpeza de cache segura!
   };
 
-  const handleRetorno = async (cicloId: number) => {
-    try {
-      await concluirServicoExterno(cicloId);
-      alert('Retorno de Serviço Externo confirmado!');
-      carregarVeiculos();
-    } catch (error: any) {
-      alert('Erro ao confirmar retorno.');
-      if (error.response?.status === 401) handleSair();
-    }
+  const carregarDemandas = async () => {
+    setLoading(true);
+    // 🛡️ MOCK PARA DEMONSTRAÇÃO: Simulando as tarefas enviadas pelos líderes
+    setTimeout(() => {
+      setDemandas([
+        {
+          id: 1,
+          titulo: 'Buscar Jogo de Pneus',
+          descricao: 'Buscar pneus na distribuidora Y para a Hilux que está na oficina.',
+          solicitante: 'Administrativo',
+          data_solicitacao: '2026-10-12T10:00:00',
+          status: 'PENDENTE'
+        },
+        {
+          id: 2,
+          titulo: 'Serviço de Torneiro',
+          descricao: 'Levar cabeçote do motor do Civic (Placa QWE-1234) ao torneiro mecânico parceiro.',
+          solicitante: 'Administrativo',
+          data_solicitacao: '2026-10-12T11:30:00',
+          status: 'EM_ANDAMENTO'
+        }
+      ]);
+      setLoading(false);
+    }, 800);
+  };
+
+  const iniciarDemanda = (id: number) => {
+    // Atualiza visualmente para o operador saber que ele assumiu a tarefa
+    setDemandas(demandas.map(d => d.id === id ? { ...d, status: 'EM_ANDAMENTO' } : d));
+  };
+
+  const concluirDemanda = (id: number) => {
+    alert('Demanda concluída! O solicitante será notificado.');
+    // Remove da tela após concluído (no futuro, fará um POST/PATCH pra API)
+    setDemandas(demandas.filter(d => d.id !== id));
   };
 
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar color="medium">
-          <IonTitle>🚚 Serviços Externos</IonTitle>
+        <IonToolbar color="tertiary">
+          <IonTitle>🚚 Serviço Externo</IonTitle>
           <IonButton slot="end" fill="clear" color="light" onClick={handleSair}>Sair</IonButton>
         </IonToolbar>
       </IonHeader>
@@ -51,32 +78,50 @@ const ServicoExterno: React.FC = () => {
       <IonContent className="ion-padding">
         {loading ? (
           <div style={{ textAlign: 'center', marginTop: '50px' }}>
-            <IonSpinner name="lines" />
-            <p>A procurar veículos em terceiros...</p>
+            <IonSpinner name="crescent" />
+            <p>Buscando solicitações...</p>
           </div>
-        ) : veiculos.length === 0 ? (
-          <IonText color="medium" className="ion-text-center">
-            <p>Nenhum veículo em serviço externo no momento.</p>
-          </IonText>
+        ) : demandas.length === 0 ? (
+          <div style={{ textAlign: 'center', marginTop: '30px' }}>
+            <IonText color="medium">
+              <p>Nenhuma demanda externa pendente no momento.</p>
+            </IonText>
+          </div>
         ) : (
-          veiculos.map((v) => (
-            <IonCard key={v.id}>
+          demandas.map((d) => (
+            <IonCard key={d.id}>
               <IonCardHeader>
-                <IonCardTitle>{v.marca_modelo}</IonCardTitle>
-                <IonBadge color="dark">{v.placa}</IonBadge>
+                <IonCardTitle>{d.titulo}</IonCardTitle>
+                <IonBadge color={d.status === 'PENDENTE' ? 'danger' : 'warning'}>
+                  {d.status.replace('_', ' ')}
+                </IonBadge>
               </IonCardHeader>
               <IonCardContent>
-                <p><strong>Status:</strong> Em Serviço Externo</p>
-                <p><strong>Ciclo:</strong> #{v.ciclo_ativo}</p>
+                <p><strong>Descrição:</strong> {d.descricao}</p>
+                <p style={{ marginTop: '10px' }}>
+                  <strong>Solicitado por:</strong> <IonBadge color="dark">{d.solicitante}</IonBadge>
+                </p>
+                <p><strong>Data:</strong> {new Date(d.data_solicitacao).toLocaleString('pt-BR')}</p>
                 
-                <IonButton 
-                  expand="block" 
-                  color="success" 
-                  style={{ marginTop: '15px' }}
-                  onClick={() => handleRetorno(v.ciclo_ativo)}
-                >
-                  Confirmar Retorno do Veículo
-                </IonButton>
+                {d.status === 'PENDENTE' ? (
+                  <IonButton 
+                    expand="block" 
+                    color="primary" 
+                    style={{ marginTop: '15px' }}
+                    onClick={() => iniciarDemanda(d.id)}
+                  >
+                    Aceitar e Iniciar Trajeto
+                  </IonButton>
+                ) : (
+                  <IonButton 
+                    expand="block" 
+                    color="success" 
+                    style={{ marginTop: '15px' }}
+                    onClick={() => concluirDemanda(d.id)}
+                  >
+                    Marcar como Concluído
+                  </IonButton>
+                )}
               </IonCardContent>
             </IonCard>
           ))
