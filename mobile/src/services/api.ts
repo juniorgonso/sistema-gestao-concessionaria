@@ -1,8 +1,7 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
-  // Atualizado para o padrão do Vite:
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
+  baseURL: 'https://sistema-gestao-concessionaria.onrender.com/api/v1',
 });
 
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {

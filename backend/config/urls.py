@@ -35,8 +35,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # 🚀 2. AQUI ESTÁ A MUDANÇA: Trocámos para a nossa View Customizada!
-    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v1/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Rotas da API V1
     path('api/v1/concessionaria/', include('apps.concessionaria.urls')),
