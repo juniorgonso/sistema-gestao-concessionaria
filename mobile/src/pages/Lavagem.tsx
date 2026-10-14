@@ -65,19 +65,9 @@ const Lavagem: React.FC = () => {
   const [veiculoConfirmacao, setVeiculoConfirmacao] = useState<VeiculoLavagem | null>(null);
   const [processando, setProcessando] = useState<boolean>(false);
 
-  const getTokenSeguro = () => {
-    let t = localStorage.getItem('token') || localStorage.getItem('access');
-    if (!t) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.toLowerCase().includes('token') || key.toLowerCase().includes('access'))) {
-          t = localStorage.getItem(key);
-          break;
-        }
-      }
-    }
-    return t;
-  };
+  const getTokenSeguro = (): string | null => {
+  return localStorage.getItem('@SistemaGestao:token');
+};
 
   useEffect(() => {
     carregarVeiculos();

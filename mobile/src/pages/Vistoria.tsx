@@ -32,18 +32,8 @@ const Vistoria: React.FC = () => {
   const [fotos, setFotos] = useState<string[]>([]);
   const [processando, setProcessando] = useState<boolean>(false);
 
-  const getTokenSeguro = () => {
-    let t = localStorage.getItem('token') || localStorage.getItem('access');
-    if (!t) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.toLowerCase().includes('token') || key.toLowerCase().includes('access'))) {
-          t = localStorage.getItem(key);
-          break;
-        }
-      }
-    }
-    return t;
+  const getTokenSeguro = (): string | null => {
+    return localStorage.getItem('@SistemaGestao:token');
   };
 
   useEffect(() => {
@@ -174,13 +164,21 @@ const Vistoria: React.FC = () => {
   };
 
   const avaliarQualidadeFinal = (resultado: 'SHOWROOM' | 'LAVAGEM') => {
+    if (!veiculoSelecionado || processando) return;
+
+    const motivo = notasVistoria.trim();
+    if (resultado === 'LAVAGEM' && !motivo) {
+      alert('Informe o motivo da reprovação antes de devolver o veículo para a Lavagem.');
+      return;
+    }
+
     const msg = resultado === 'SHOWROOM' ? 'Aprovado para venda.' : 'REPROVADO. Retrabalho na Lavagem.';
-    const obs = veiculoSelecionado?.observacoes;
-    const historico = obs 
-      ? obs + "\n\n[Vistoria Final]: " + msg + " " + notasVistoria
-      : "[Vistoria Final]: " + msg + " " + notasVistoria;
-    
-    const sucesso = resultado === 'SHOWROOM' 
+    const obs = veiculoSelecionado.observacoes;
+    const historico = obs
+      ? obs + "\n\n[Vistoria Final]: " + msg + (motivo ? " " + motivo : "")
+      : "[Vistoria Final]: " + msg + (motivo ? " " + motivo : "");
+
+    const sucesso = resultado === 'SHOWROOM'
       ? "Perfeito! Veículo pronto e enviado para o Showroom!"
       : "Reprovado! Veículo devolvido para a Lavagem.";
 
@@ -266,7 +264,7 @@ const Vistoria: React.FC = () => {
                     
                     <IonItem style={{ marginTop: '15px', textAlign: 'left' }}>
                       <IonLabel position="stacked">Motivo (Caso haja retrabalho na lavagem)</IonLabel>
-                      <IonTextarea rows={3} placeholder="Ex: Vidro manchado, tapete sujo..." value={notasVistoria} onIonChange={e => setNotasVistoria(e.detail.value!)} />
+                      <IonTextarea rows={3} placeholder="Ex: Vidro manchado, tapete sujo..." value={notasVistoria} onIonInput={e => setNotasVistoria(e.detail.value ?? '')} />
                     </IonItem>
 
                     <div style={{ display: 'flex', gap: '10px', marginTop: '40px' }}>
@@ -306,7 +304,7 @@ const Vistoria: React.FC = () => {
                   <>
                     <IonItem style={{ marginTop: '15px' }}>
                       <IonLabel position="stacked">Observações ou Pendências</IonLabel>
-                      <IonTextarea rows={4} placeholder="Descreva falhas da oficina ou pendências..." value={notasVistoria} onIonChange={e => setNotasVistoria(e.detail.value!)} />
+                      <IonTextarea rows={4} placeholder="Descreva falhas da oficina ou pendências..." value={notasVistoria} onIonInput={e => setNotasVistoria(e.detail.value ?? '')} />
                     </IonItem>
 
                     <div style={{ marginTop: '25px', padding: '0 5px' }}>
