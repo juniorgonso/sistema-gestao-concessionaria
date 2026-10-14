@@ -1,34 +1,60 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
+
 
 class Concessionaria(models.Model):
-    nome = models.CharField(max_length=150, verbose_name="Nome da Concessionária")
-    cnpj = models.CharField(max_length=20, unique=True, verbose_name="CNPJ")
+    nome = models.CharField(max_length=150, verbose_name='Nome da Concessionária')
+    cnpj = models.CharField(max_length=20, unique=True, verbose_name='CNPJ')
 
     def __str__(self):
         return self.nome
 
 
 class Unidade(models.Model):
-    concessionaria = models.ForeignKey(Concessionaria, on_delete=models.CASCADE, related_name='unidades')
-    nome = models.CharField(max_length=150, verbose_name="Nome da Unidade (Ex: Gran Via, Eurovia, Piedade)")
-    cidade = models.CharField(max_length=100, default="Jaboatão dos Guararapes")
+    CODIGOS_LOJA = [
+        ('GRAN_VIA', 'Gran Via'),
+        ('EUROVIA', 'Eurovia'),
+        ('PIEDADE', 'Piedade'),
+    ]
+
+    concessionaria = models.ForeignKey(
+        Concessionaria, on_delete=models.CASCADE, related_name='unidades'
+    )
+    nome = models.CharField(
+        max_length=150, verbose_name='Nome da Unidade (Ex: Gran Via, Eurovia, Piedade)'
+    )
+    cidade = models.CharField(max_length=100, default='Jaboatão dos Guararapes')
+
+    # Relaciona uma unidade real ao código já usado pelos veículos.
+    # Nulo durante a migração para preservar as unidades existentes.
+    # A unicidade evita que duas unidades recebam a mesma fila de veículos.
+    codigo_loja = models.CharField(
+        max_length=20,
+        choices=CODIGOS_LOJA,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name='Código da loja dos veículos',
+        help_text='Selecione o código correspondente ao campo loja do Veículo.',
+    )
 
     def __str__(self):
-        return f"{self.nome} - {self.concessionaria.nome}"
+        return f'{self.nome} - {self.concessionaria.nome}'
 
 
 class Setor(models.Model):
     unidade = models.ForeignKey(Unidade, on_delete=models.CASCADE, related_name='setores')
-    nome = models.CharField(max_length=100, verbose_name="Nome do Setor (Ex: Oficina, Avaliação, Lavagem)")
+    nome = models.CharField(
+        max_length=100, verbose_name='Nome do Setor (Ex: Oficina, Avaliação, Lavagem)'
+    )
 
     def __str__(self):
-        return f"{self.nome} ({self.unidade.nome})"
+        return f'{self.nome} ({self.unidade.nome})'
 
 
 class Fornecedor(models.Model):
-    nome_fantasia = models.CharField(max_length=150, verbose_name="Nome Fantasia")
-    tipo_servico = models.CharField(max_length=100, verbose_name="Tipo de Serviço")
+    nome_fantasia = models.CharField(max_length=150, verbose_name='Nome Fantasia')
+    tipo_servico = models.CharField(max_length=100, verbose_name='Tipo de Serviço')
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -44,23 +70,31 @@ class Ocorrencia(models.Model):
         ('QUALIDADE_FINAL', 'Qualidade Final'),
     ]
 
-    veiculo = models.ForeignKey('veiculos.Veiculo', on_delete=models.CASCADE, related_name='ocorrencias', verbose_name="Veículo")
-    ciclo = models.ForeignKey('veiculos.CicloVeiculo', on_delete=models.CASCADE, related_name='ocorrencias', null=True, blank=True, verbose_name="Ciclo Operacional")
-    origem = models.CharField(max_length=30, choices=ORIGEM_CHOICES, default='AVALIADOR', verbose_name="Etapa de Origem")
-    
-    descricao = models.TextField(verbose_name="Descrição do Problema")
-    status = models.CharField(max_length=20, default='PENDENTE', verbose_name="Status da Ocorrência")
-    
+    veiculo = models.ForeignKey(
+        'veiculos.Veiculo', on_delete=models.CASCADE,
+        related_name='ocorrencias', verbose_name='Veículo'
+    )
+    ciclo = models.ForeignKey(
+        'veiculos.CicloVeiculo', on_delete=models.CASCADE,
+        related_name='ocorrencias', null=True, blank=True,
+        verbose_name='Ciclo Operacional'
+    )
+    origem = models.CharField(
+        max_length=30, choices=ORIGEM_CHOICES, default='AVALIADOR',
+        verbose_name='Etapa de Origem'
+    )
+    descricao = models.TextField(verbose_name='Descrição do Problema')
+    status = models.CharField(max_length=20, default='PENDENTE', verbose_name='Status da Ocorrência')
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Ocorrência"
-        verbose_name_plural = "Ocorrências"
+        verbose_name = 'Ocorrência'
+        verbose_name_plural = 'Ocorrências'
         ordering = ['-criado_em']
 
     def __str__(self):
-        return f"[{self.get_origem_display()}] {self.descricao[:30]} - {self.veiculo.placa}"
+        return f'[{self.get_origem_display()}] {self.descricao[:30]} - {self.veiculo.placa}'
 
 
 class DemandaExterna(models.Model):
@@ -78,9 +112,13 @@ class DemandaExterna(models.Model):
 
 
 class EvidenciaFoto(models.Model):
-    ocorrencia = models.ForeignKey(Ocorrencia, on_delete=models.CASCADE, related_name='fotos', null=True, blank=True, verbose_name="Ocorrência Relacionada")
-    imagem = models.ImageField(upload_to='evidencias/', verbose_name="Ficheiro de Imagem")
+    ocorrencia = models.ForeignKey(
+        Ocorrencia, on_delete=models.CASCADE,
+        related_name='fotos', null=True, blank=True,
+        verbose_name='Ocorrência Relacionada'
+    )
+    imagem = models.ImageField(upload_to='evidencias/', verbose_name='Ficheiro de Imagem')
     enviado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Foto Evidência #{self.id}"
+        return f'Foto Evidência #{self.id}'
