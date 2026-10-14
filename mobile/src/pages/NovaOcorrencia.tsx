@@ -1,3 +1,5 @@
+import axios from 'axios';
+import api from '../services/api';
 import React, { useState } from 'react';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, 
@@ -34,55 +36,60 @@ const NovaOcorrencia: React.FC = () => {
     setFotos(novasFotos);
   };
 
-  const registrarEntradaVeiculo = async () => {
-    if (!placa || !marcaModelo || !loja) {
-      alert("⚠️ Preencha a Placa, o Modelo e a Loja antes de registrar!");
-      return;
+
+const registrarEntradaVeiculo = async () => {
+  if (!placa.trim() || !marcaModelo.trim() || !loja) {
+    alert('Preencha a placa, o modelo e a loja.');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await api.post('/veiculos/lista/', {
+      placa: placa.trim().toUpperCase(),
+      marca_modelo: marcaModelo.trim(),
+      loja,
+      observacoes,
+    });
+
+    if (response.status === 201) {
+      alert(
+        `Veículo ${marcaModelo} (${placa}) registrado com sucesso! ` +
+        'Enviado automaticamente para a Oficina.'
+      );
+
+      window.location.href = '/home';
     }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
 
-    setLoading(true);
-    let token = localStorage.getItem('token') || localStorage.getItem('access');
-    
-    if (!token) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.toLowerCase().includes('token') || key.toLowerCase().includes('access'))) {
-          token = localStorage.getItem(key);
-          break;
-        }
-      }
-    }
-
-    try {
-      const url = 'http://127.0.0.1:8000/api/v1/veiculos/lista/'; 
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          placa: placa,
-          marca_modelo: marcaModelo,
-          loja: loja, // Agora envia 'EUROVIA', 'GRAN_VIA' ou 'PIEDADE'
-          observacoes: observacoes
-        })
-      });
-
-      if (response.ok || response.status === 201) {
-        alert(`✅ Veículo ${marcaModelo} (${placa}) registrado com sucesso! Foi enviado direto para a Oficina.`);
-        window.location.href = '/home'; 
+      if (status === 401) {
+        alert('Sessão inválida ou expirada. Faça login novamente.');
+      } else if (status === 403) {
+        alert('Você não tem permissão para cadastrar veículos.');
+      } else if (status === 400) {
+        alert(
+          'Verifique os dados do veículo: ' +
+          JSON.stringify(error.response?.data)
+        );
       } else {
-        const erroDjango = await response.text();
-        alert(`❌ Erro do Servidor: ${erroDjango}`);
+        alert(
+          'Erro ao registrar veículo: ' +
+          (error.response?.data
+            ? JSON.stringify(error.response.data)
+            : error.message)
+        );
       }
-    } catch (error) {
-      alert("❌ Falha de conexão com o banco de dados. O Django está a rodar?");
-    } finally {
-      setLoading(false);
+    } else {
+      alert('Erro inesperado ao registrar veículo.');
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <IonPage>

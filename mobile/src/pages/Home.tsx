@@ -7,6 +7,8 @@ import {
 } from '@ionic/react';
 import { add, carSportOutline, refreshOutline } from 'ionicons/icons';
 import { logout } from '../services/auth';
+import api from '../services/api';
+import axios from 'axios';
 
 const Home: React.FC = () => {
   const [veiculos, setVeiculos] = useState<any[]>([]);
@@ -23,51 +25,47 @@ const Home: React.FC = () => {
     window.location.href = '/login'; 
   };
 
-  const getTokenSeguro = () => {
-    let t = localStorage.getItem('token') || localStorage.getItem('access');
-    if (!t) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.toLowerCase().includes('token') || key.toLowerCase().includes('access'))) {
-          t = localStorage.getItem(key);
-          break;
-        }
-      }
-    }
-    return t;
-  };
-
   const carregarVeiculos = async () => {
     setLoading(true);
     setErroApi('');
-    const token = getTokenSeguro();
 
-    if (!token) {
-      setErroApi("Sessão expirada. Faça Login novamente.");
+    // O login salva o token de acesso nesta chave.
+    // Nunca utilizar o refresh token como Bearer.
+    if (!localStorage.getItem('@SistemaGestao:token')) {
+      setErroApi('Sessão expirada. Faça login novamente.');
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/v1/veiculos/lista/', {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
+      // A instância api usa HTTPS no Render e adiciona o JWT automaticamente.
+      const response = await api.get<any[]>('/veiculos/lista/');
+      const dados = response.data;
 
-      if (response.ok) {
-        const dados = await response.json();
-        if (Array.isArray(dados)) {
-          // Ordena dos mais recentes para os mais antigos
-          dados.sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime());
-          
-          // Mostra os últimos 15 veículos registrados
-          const historicoRecentes = dados.slice(0, 15); 
-          setVeiculos(historicoRecentes);
-        }
+      if (Array.isArray(dados)) {
+        // Preserva a ordem e o limite de 15 veículos exibidos no histórico.
+        const historicoRecentes = [...dados]
+          .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
+          .slice(0, 15);
+        setVeiculos(historicoRecentes);
       } else {
-        setErroApi('Erro ao comunicar com o servidor: ' + response.status);
+        setErroApi('Resposta inesperada ao carregar os veículos.');
       }
     } catch (error) {
-      setErroApi('Falha de conexão com o banco de dados Django.');
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 401) {
+          setErroApi('A sessão não foi autorizada. Saia e entre novamente.');
+        } else if (status === 403) {
+          setErroApi('Seu perfil não tem permissão para consultar este histórico.');
+        } else if (status) {
+          setErroApi(`Erro ao comunicar com o servidor: ${status}`);
+        } else {
+          setErroApi('Falha de conexão com o servidor.');
+        }
+      } else {
+        setErroApi('Não foi possível carregar o histórico de veículos.');
+      }
     } finally {
       setLoading(false);
     }

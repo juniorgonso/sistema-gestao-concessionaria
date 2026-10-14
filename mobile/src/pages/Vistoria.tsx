@@ -67,7 +67,7 @@ const Vistoria: React.FC = () => {
     }
 
     try {
-      const url = 'http://127.0.0.1:8000/api/v1/veiculos/lista/';
+      const url = 'https://sistema-gestao-concessionaria.onrender.com/api/v1/veiculos/lista/';
       const response = await fetch(url, {
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
       });
@@ -125,7 +125,7 @@ const Vistoria: React.FC = () => {
     if (!veiculoSelecionado) return;
     setProcessando(true);
     try {
-      const url = "http://127.0.0.1:8000/api/v1/veiculos/lista/" + veiculoSelecionado.id + "/";
+      const url = "https://sistema-gestao-concessionaria.onrender.com/api/v1/veiculos/lista/" + veiculoSelecionado.id + "/";
       const response = await fetch(url, {
         method: 'PATCH',
         headers: { 'Authorization': "Bearer " + getTokenSeguro(), 'Content-Type': 'application/json' },

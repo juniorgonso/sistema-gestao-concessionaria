@@ -100,7 +100,7 @@ const Lavagem: React.FC = () => {
     }
 
     try {
-      const url = 'http://127.0.0.1:8000/api/v1/veiculos/lista/';
+      const url = 'https://sistema-gestao-concessionaria.onrender.com/api/v1/veiculos/lista/';
       const response = await fetch(url, {
         headers: { 'Authorization': "Bearer " + token, 'Content-Type': 'application/json' }
       });
@@ -141,7 +141,7 @@ const Lavagem: React.FC = () => {
       : "[Lavagem]: Serviço concluído. Pronto para Vistoria Final.";
 
     try {
-      const url = "http://127.0.0.1:8000/api/v1/veiculos/lista/" + veiculoConfirmacao.id + "/";
+      const url = "https://sistema-gestao-concessionaria.onrender.com/api/v1/veiculos/lista/" + veiculoConfirmacao.id + "/";
       const response = await fetch(url, {
         method: 'PATCH',
         headers: { 'Authorization': "Bearer " + token, 'Content-Type': 'application/json' },
